@@ -1,7 +1,7 @@
 const params = {
 	particleCount: 500,
 	width: 600,
-	height: 500,
+	height: 600,
 	speed: 2,
 	stepSize: 1.5,
 	stickyDistance: 4,
@@ -11,7 +11,8 @@ const params = {
 	startTime: null,
 	lastUpdate: null,
 	aggregatedCount: 0,
-	growthRate: 0
+	growthRate: 0,
+	mode: 'classic'
 };
 
 const canvas = document.getElementById('simulation-canvas');
@@ -260,6 +261,16 @@ speedSlider.addEventListener('input', () => {
 });
 
 initSimulation();
+
+document.querySelectorAll('.tab').forEach((tab, index) => {
+	tab.addEventListener('click', () => {
+		document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+		tab.classList.add('active');
+		
+		params.mode = index === 0 ? 'classic' : 'mobile-cluster';
+		resetBtn.click();
+	});
+});
 
 for (const particle of aggregatedParticles) {
 	particle.draw();
