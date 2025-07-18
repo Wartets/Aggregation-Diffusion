@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Agrégation limitée par la diffusion</title>
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+	<div class="container">
+		<header>
+			<h1>Agrégation limitée par la diffusion</h1>
+			<p class="subtitle">Simulation numérique du phénomène d'agrégation brownienne et étude des motifs fractals résultants</p>
+		</header>
+		
+		<div class="content">
+			<div class="panel">
+				<h2>Simulation d'agrégation</h2>
+				
+				<div class="tabs">
+					<div class="tab active">Mode DLA Classique</div>
+					<div class="tab">Mode Agrégats Mobiles</div>
+				</div>
+				
+				<div class="simulation-container">
+					<div class="particles-counter">Particules agrégées: <span id="aggregated-count">0</span>/<span id="total-particles">500</span></div>
+					<canvas id="simulation-canvas" width="600" height="500"></canvas>
+				</div>
+				
+				<div class="controls">
+					<div class="control-group">
+						<label for="particles-slider">Nombre de particules</label>
+						<input type="range" id="particles-slider" min="100" max="2000" value="500" step="100">
+					</div>
+					
+					<div class="control-group">
+						<label for="speed-slider">Vitesse de simulation</label>
+						<input type="range" id="speed-slider" min="1" max="100" value="50">
+					</div>
+					
+					<div class="control-group">
+						<label for="density-slider">Densité initiale</label>
+						<input type="range" id="density-slider" min="1" max="10" value="5">
+					</div>
+					
+					<div class="control-group">
+						<label for="seeds-select">Amorces initiales</label>
+						<select id="seeds-select">
+							<option value="1">1 (Centre)</option>
+							<option value="4">4 (Carré)</option>
+							<option value="5">5 (Croix)</option>
+							<option value="7">7 (Aléatoire)</option>
+						</select>
+					</div>
+				</div>
+				
+				<div class="action-buttons">
+					<button id="start-btn">Démarrer la simulation</button>
+					<button id="reset-btn" class="btn-danger">Réinitialiser</button>
+				</div>
+				
+				<div class="stats">
+					<div class="stat-card">
+						<div class="stat-label">Temps écoulé</div>
+						<div class="stat-value" id="time-value">0</div>
+						<div class="stat-label">secondes</div>
+					</div>
+					
+					<div class="stat-card">
+						<div class="stat-label">Dimension fractale</div>
+						<div class="stat-value" id="fractal-value">1.70</div>
+						<div class="stat-label">estimation</div>
+					</div>
+					
+					<div class="stat-card">
+						<div class="stat-label">Taux d'agrégation</div>
+						<div class="stat-value" id="rate-value">0.0</div>
+						<div class="stat-label">particules/s</div>
+					</div>
+					
+					<div class="stat-card">
+						<div class="stat-label">Rayon de giration</div>
+						<div class="stat-value" id="radius-value">0</div>
+						<div class="stat-label">pixels</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="panel">
+				<h2>Théorie et analyse</h2>
+				
+				<div class="info-section">
+					<h3>Phénomène d'agrégation limitée par diffusion</h3>
+					<p>Lorsqu'une particule est plongée dans un milieu, elle subit des chocs aléatoires avec les molécules environnantes. Ce mouvement brownien peut être modélisé comme une marche aléatoire.</p>
+					<p>Quand plusieurs particules interagissent, elles peuvent former des agrégats de structures fractales. Une particule mobile devient immobile lorsqu'elle "touche" une particule immobile, créant ainsi des motifs complexes appelés "arbres browniens".</p>
+				</div>
+				
+				<div class="info-section">
+					<h3>Paramètres influençant l'agrégation</h3>
+					<p>La forme des agrégats dépend de plusieurs facteurs :</p>
+					<ul>
+						<li><strong>Densité initiale</strong> : Des densités plus élevées produisent des agrégats plus denses</li>
+						<li><strong>Nombre d'amorces</strong> : Plus d'amorces créent plusieurs centres de croissance</li>
+						<li><strong>Vitesse de diffusion</strong> : Affecte la structure des branches</li>
+						<li><strong>Conditions aux limites</strong> : Périodiques ou absorbantes</li>
+					</ul>
+				</div>
+				
+				<div class="fractal-info">
+					<div class="fractal-image">∞</div>
+					<div class="fractal-desc">
+						<h3>Propriétés fractales</h3>
+						<p>Les agrégats DLA présentent une dimension fractale typique d'environ 1.70 en 2D. Cette dimension caractérise la façon dont la structure remplit l'espace et sa complexité géométrique.</p>
+						<p>La dimension fractale est calculée par analyse de la relation masse-rayon : M ∝ R<sup>D</sup></p>
+					</div>
+				</div>
+				
+				<div class="info-section">
+					<h3>Comparaison des modes</h3>
+					<p><strong>Mode classique</strong> : Les particules deviennent immobiles après agrégation, formant une structure fixe.</p>
+					<p><strong>Mode agrégats mobiles</strong> : Les agrégats continuent à diffuser avec un coefficient réduit (D ∝ 1/R), menant à des structures plus compactes.</p>
+				</div>
+			</div>
+		</div>
+		
+		<script src="script.js"></script>
+		
+		<footer>
+			<p>Projet numérique - Physique des systèmes complexes | Mécanismes d'agrégation brownienne</p>
+			<p>Simulation réalisée avec Canvas API et JavaScript</p>
+		</footer>
+	</div>
+</body>
+</html>
