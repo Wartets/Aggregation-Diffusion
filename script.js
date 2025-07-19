@@ -11,9 +11,10 @@ const params = {
 	startTime: null,
 	lastUpdate: null,
 	aggregatedCount: 0,
-	growthRate: 0,
-	mode: 'classic'
+	growthRate: 0
 };
+
+let currentMode = 'classic';
 
 const canvas = document.getElementById('simulation-canvas');
 const ctx = canvas.getContext('2d');
@@ -42,6 +43,9 @@ class Particle {
 		this.mobile = mobile;
 		this.stuck = !mobile;
 		this.color = mobile ? '#3498db' : '#e74c3c';
+        this.inCluster = false;
+        this.clusterId = null;
+        this.clusterSize = 1;
 	}
 	
 	move() {
@@ -56,6 +60,21 @@ class Particle {
 		if (this.y < 0) this.y = params.height;
 		if (this.y > params.height) this.y = 0;
 	}
+
+    moveCluster() {
+        if (!this.inCluster) return;
+        
+        const angle = Math.random() * Math.PI * 2;
+        const step = params.stepSize / Math.sqrt(this.clusterSize);
+        
+        this.x += Math.cos(angle) * step;
+        this.y += Math.sin(angle) * step;
+        
+        if (this.x < 0) this.x = params.width;
+        if (this.x > params.width) this.x = 0;
+        if (this.y < 0) this.y = params.height;
+        if (this.y > params.height) this.y = 0;
+    }
 	
 	checkAggregation() {
 		if (!this.mobile || this.stuck) return false;
@@ -93,9 +112,12 @@ function initSimulation() {
 	params.lastUpdate = null;
 	params.growthRate = 0;
 	
-	createSeedParticles();
-	
-	createMobileParticles();
+    if (currentMode === 'classic') {
+        createSeedParticles();
+        createMobileParticles();
+    } else {
+        createMobileClusters();
+    }
 	
 	updateStats();
 }
@@ -147,6 +169,51 @@ function createMobileParticles() {
 	}
 }
 
+function createMobileClusters() {
+    const seedCount = parseInt(seedsSelect.value);
+    const clusterCenters = [];
+
+    if (seedCount === 1) {
+        clusterCenters.push({ x: params.width/2, y: params.height/2 });
+    } else if (seedCount === 4) {
+        const offset = 100;
+        clusterCenters.push({ x: params.width/2 - offset, y: params.height/2 - offset });
+        clusterCenters.push({ x: params.width/2 + offset, y: params.height/2 - offset });
+        clusterCenters.push({ x: params.width/2 - offset, y: params.height/2 + offset });
+        clusterCenters.push({ x: params.width/2 + offset, y: params.height/2 + offset });
+    } else {
+        for (let i = 0; i < seedCount; i++) {
+            clusterCenters.push({
+                x: 100 + Math.random() * (params.width - 200),
+                y: 100 + Math.random() * (params.height - 200)
+            });
+        }
+    }
+
+    const particlesPerCluster = Math.floor(params.particleCount / clusterCenters.length);
+    
+    clusterCenters.forEach((center, idx) => {
+        for (let i = 0; i < particlesPerCluster; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * 50;
+            const x = center.x + Math.cos(angle) * distance;
+            const y = center.y + Math.sin(angle) * distance;
+            
+            const particle = new Particle(x, y, params.particleRadius);
+            particle.inCluster = true;
+            particle.clusterId = idx;
+            particle.clusterSize = particlesPerCluster;
+            particle.color = getClusterColor(idx);
+            particles.push(particle);
+        }
+    });
+}
+
+function getClusterColor(clusterId) {
+    const colors = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB'];
+    return colors[clusterId % colors.length];
+}
+
 function simulate() {
 	if (!params.simulationRunning) return;
 	
@@ -158,17 +225,20 @@ function simulate() {
 	
 	let aggregatedThisFrame = 0;
 	
-	for (const particle of particles) {
-		if (particle.stuck) continue;
-		
-		particle.move();
-		if (particle.checkAggregation()) {
-			aggregatedParticles.push(particle);
-			params.aggregatedCount++;
-			aggregatedThisFrame++;
-		}
-		particle.draw();
-	}
+    for (const particle of particles) {
+        if (currentMode === 'classic') {
+            if (particle.stuck) continue;
+            particle.move();
+            if (particle.checkAggregation()) {
+                aggregatedParticles.push(particle);
+                params.aggregatedCount++;
+                aggregatedThisFrame++;
+            }
+        } else {
+            particle.moveCluster();
+        }
+        particle.draw();
+    }
 	
 	const now = Date.now();
 	if (params.lastUpdate) {
@@ -262,14 +332,16 @@ speedSlider.addEventListener('input', () => {
 
 initSimulation();
 
-document.querySelectorAll('.tab').forEach((tab, index) => {
-	tab.addEventListener('click', () => {
-		document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-		tab.classList.add('active');
-		
-		params.mode = index === 0 ? 'classic' : 'mobile-cluster';
-		resetBtn.click();
-	});
+const tabs = document.querySelectorAll('.tab');
+tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        currentMode = this.textContent.includes('Classique') ? 'classic' : 'mobile';
+        
+        resetBtn.click();
+    });
 });
 
 for (const particle of aggregatedParticles) {
