@@ -309,43 +309,43 @@ function getClusterColor(clusterId) {
 }
 
 function mergeClusters(p1, p2) {
-    let aggregator, newParticle;
-    
-    if (p1.isAggregator && !p2.isAggregator) {
-        aggregator = p1;
-        newParticle = p2;
-    } else if (!p1.isAggregator && p2.isAggregator) {
-        aggregator = p2;
-        newParticle = p1;
-    } else {
-        aggregator = Math.random() > 0.5 ? p1 : p2;
-        newParticle = aggregator === p1 ? p2 : p1;
-    }
-    
-    if (aggregator.clusterId === null) {
-        const newClusterId = Date.now();
-        aggregator.clusterId = newClusterId;
-        aggregator.clusterSize = 1;
-    }
-    
-    newParticle.clusterId = aggregator.clusterId;
-    newParticle.color = aggregator.color;
-    newParticle.isAggregator = true;
-    
-    const allParticles = [...particles, ...aggregatedParticles];
-    let newSize = 0;
-    
-    for (const p of allParticles) {
-        if (p.clusterId === aggregator.clusterId) {
-            newSize++;
-        }
-    }
-    
-    for (const p of allParticles) {
-        if (p.clusterId === aggregator.clusterId) {
-            p.clusterSize = newSize;
-        }
-    }
+	let aggregator, newParticle;
+	
+	if (p1.isAggregator && !p2.isAggregator) {
+		aggregator = p1;
+		newParticle = p2;
+	} else if (!p1.isAggregator && p2.isAggregator) {
+		aggregator = p2;
+		newParticle = p1;
+	} else {
+		aggregator = Math.random() > 0.5 ? p1 : p2;
+		newParticle = aggregator === p1 ? p2 : p1;
+	}
+	
+	if (aggregator.clusterId === null) {
+		const newClusterId = Date.now();
+		aggregator.clusterId = newClusterId;
+		aggregator.clusterSize = 1;
+	}
+	
+	newParticle.clusterId = aggregator.clusterId;
+	newParticle.color = aggregator.color;
+	newParticle.isAggregator = true;
+	
+	const allParticles = [...particles, ...aggregatedParticles];
+	let newSize = 0;
+	
+	for (const p of allParticles) {
+		if (p.clusterId === aggregator.clusterId) {
+			newSize++;
+		}
+	}
+	
+	for (const p of allParticles) {
+		if (p.clusterId === aggregator.clusterId) {
+			p.clusterSize = newSize;
+		}
+	}
 }
 
 function simulate() {
