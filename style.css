@@ -101,6 +101,14 @@ canvas {
 	margin-bottom: 15px;
 }
 
+.control-group span {
+    display: inline-block;
+    margin-left: 10px;
+    min-width: 30px;
+    text-align: center;
+    color: var(--secondary);
+}
+
 label {
 	display: block;
 	margin-bottom: 8px;
@@ -253,4 +261,149 @@ footer {
 .tab.active {
     background: var(--secondary);
     color: white;
+}
+
+/* Styles pour le panneau théorique */
+.info-section {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(30, 40, 50, 0.6);
+    border-radius: 10px;
+    border-left: 3px solid var(--secondary);
+}
+
+.mechanism {
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(20, 30, 40, 0.4);
+    border-radius: 8px;
+}
+
+.mechanism h4 {
+    color: var(--secondary);
+    margin-bottom: 8px;
+}
+
+
+.params-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.param-card {
+    text-align: center;
+    padding: 15px;
+    background: rgba(20, 30, 40, 0.5);
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+}
+
+.param-card:hover {
+    transform: translateY(-5px);
+    background: rgba(30, 50, 70, 0.6);
+}
+
+.param-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 10px;
+    background: var(--secondary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.fractal-image {
+    font-size: 3rem;
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+/* Nouveaux styles pour la section de comparaison */
+.comparison-section {
+    margin: 25px 0;
+}
+
+.mode-comparison {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-top: 15px;
+}
+
+.mode-card {
+    flex: 1;
+    padding: 20px;
+    background: rgba(25, 35, 45, 0.6);
+    border-radius: 10px;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.mode-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.mode-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--secondary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.4rem;
+    margin-right: 15px;
+}
+
+.mode-card h4 {
+    color: var(--secondary);
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.mode-card ul {
+    padding-left: 20px;
+    margin-top: 10px;
+    flex-grow: 1;
+}
+
+.mode-card li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.vs-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: var(--secondary);
+    font-size: 1.2rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .mode-comparison {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .vs-divider {
+        padding: 10px 0;
+        transform: rotate(90deg);
+    }
 }

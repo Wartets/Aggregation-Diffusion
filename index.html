@@ -30,17 +30,20 @@
 				<div class="controls">
 					<div class="control-group">
 						<label for="particles-slider">Nombre de particules</label>
-						<input type="range" id="particles-slider" min="100" max="2000" value="500" step="100">
+						<input type="range" id="particles-slider" min="10" max="2000" value="500" step="10">
+						<span class="slider-value" id="particles-value">500</span>
 					</div>
-					
+
 					<div class="control-group">
 						<label for="speed-slider">Vitesse de simulation</label>
-						<input type="range" id="speed-slider" min="1" max="100" value="50">
+						<input type="range" id="speed-slider" min="1" max="200" value="50">
+						<span class="slider-value" id="speed-value">50</span>
 					</div>
-					
+
 					<div class="control-group">
 						<label for="density-slider">Densité initiale</label>
-						<input type="range" id="density-slider" min="1" max="10" value="5">
+						<input type="range" id="density-slider" min="1" max="20" value="5">
+						<span class="slider-value" id="density-value">5</span>
 					</div>
 					
 					<div class="control-group">
@@ -90,46 +93,92 @@
 				<h2>Théorie et analyse</h2>
 				
 				<div class="info-section">
-					<h3>Phénomène d'agrégation limitée par diffusion</h3>
-					<p>Lorsqu'une particule est plongée dans un milieu, elle subit des chocs aléatoires avec les molécules environnantes. Ce mouvement brownien peut être modélisé comme une marche aléatoire.</p>
-					<p>Quand plusieurs particules interagissent, elles peuvent former des agrégats de structures fractales. Une particule mobile devient immobile lorsqu'elle "touche" une particule immobile, créant ainsi des motifs complexes appelés "arbres browniens".</p>
+					<h3>Agrégation limitée par diffusion (DLA)</h3>
+					<p>Ce phénomène décrit la formation de structures fractales par agrégation de particules en mouvement brownien. Lorsqu'une particule mobile rencontre une particule immobile (mode classique) ou un agrégateur (mode mobile), elle s'agrège, créant des motifs arborescents complexes.</p>
+					<p>Ces structures présentent des propriétés d'auto-similarité et une dimension fractale caractéristique, avec une valeur théorique d'environ 1.71 en 2D.</p>
 				</div>
 				
 				<div class="info-section">
-					<h3>Paramètres influençant l'agrégation</h3>
-					<p>La forme des agrégats dépend de plusieurs facteurs :</p>
-					<ul>
-						<li><strong>Densité initiale</strong> : Des densités plus élevées produisent des agrégats plus denses</li>
-						<li><strong>Nombre d'amorces</strong> : Plus d'amorces créent plusieurs centres de croissance</li>
-						<li><strong>Vitesse de diffusion</strong> : Affecte la structure des branches</li>
-						<li><strong>Conditions aux limites</strong> : Périodiques ou absorbantes</li>
-					</ul>
+					<h3>Mécanismes fondamentaux</h3>
+					<div class="mechanism">
+						<h4>Mouvement brownien</h4>
+						<p>Modélisé par une marche aléatoire : Δx = cos(θ)·δ, Δy = sin(θ)·δ où θ est aléatoire et δ le pas de diffusion.</p>
+					</div>
+					<div class="mechanism">
+						<h4>Processus d'agrégation</h4>
+						<p>Une particule s'agrège quand elle entre dans le rayon d'interaction (r<sub>i</sub> = r<sub>1</sub> + r<sub>2</sub> + d<sub>stick</sub>) d'une particule fixe ou d'un agrégateur.</p>
+					</div>
+					<div class="mechanism">
+						<h4>Dynamique des clusters</h4>
+						<p>Dans le mode mobile, les agrégats diffusent avec un coefficient D ∝ 1/√N où N est le nombre de particules dans le cluster.</p>
+					</div>
 				</div>
 				
 				<div class="fractal-info">
 					<div class="fractal-image">∞</div>
 					<div class="fractal-desc">
 						<h3>Propriétés fractales</h3>
-						<p>Les agrégats DLA présentent une dimension fractale typique d'environ 1.70 en 2D. Cette dimension caractérise la façon dont la structure remplit l'espace et sa complexité géométrique.</p>
-						<p>La dimension fractale est calculée par analyse de la relation masse-rayon : M ∝ R<sup>D</sup></p>
+						<p>Les agrégats DLA présentent une dimension fractale D<sub>f</sub> ≈ 1.71 caractérisée par la relation :</p>
+						<p>M(R) ∝ R<sup>D<sub>f</sub></sup></p>
+						<p>où M est la masse contenue dans une sphère de rayon R. Cette dimension mesure comment la structure remplit l'espace.</p>
+					</div>
+				</div>
+				
+				<div class="comparison-section">
+					<h3>Comparaison des modes</h3>
+					<div class="mode-comparison">
+						<div class="mode-card">
+							<div class="mode-header">
+								<div class="mode-icon">C</div>
+								<h4>Mode Classique</h4>
+							</div>
+							<ul>
+								<li>Particules immobilisées après agrégation</li>
+								<li>Croissance radiale avec branches dendritiques</li>
+								<li>Dimension fractale ≈ 1.70</li>
+								<li>Structure finale fixe</li>
+							</ul>
+						</div>
+						<div class="vs-divider">vs</div>
+						<div class="mode-card">
+							<div class="mode-header">
+								<div class="mode-icon">M</div>
+								<h4>Mode Agrégats Mobiles</h4>
+							</div>
+							<ul>
+								<li>Agrégats diffusent avec D ∝ 1/√taille</li>
+								<li>Coalescence des clusters par collisions</li>
+								<li>Structures plus compactes (D<sub>f</sub> ≈ 1.90)</li>
+								<li>Dynamique continue de fusion</li>
+							</ul>
+						</div>
 					</div>
 				</div>
 				
 				<div class="info-section">
-					<h3>Comparaison des modes</h3>
-					<p><strong>Mode classique</strong> : Les particules deviennent immobiles après agrégation, formant une structure fixe.</p>
-					<p><strong>Mode agrégats mobiles</strong> : Les agrégats continuent à diffuser avec un coefficient réduit (D ∝ 1/R), menant à des structures plus compactes.</p>
-				</div>
-				
-				<div class="info-section">
-					<h3>Mode Agrégats Mobiles</h3>
-					<p>Dans ce mode, les particules forment des agrégats qui continuent à diffuser avec un coefficient réduit (D ∝ 1/R). Les caractéristiques :</p>
-					<ul>
-						<li>Les agrégats conservent leur mobilité</li>
-						<li>La vitesse de diffusion est inversement proportionnelle à la taille</li>
-						<li>Formation de structures plus compactes</li>
-						<li>Dynamique de coalescence entre agrégats</li>
-					</ul>
+					<h3>Paramètres influençant l'agrégation</h3>
+					<div class="params-grid">
+						<div class="param-card">
+							<div class="param-icon">ρ</div>
+							<h4>Densité initiale</h4>
+							<p>Contrôle la compacité des agrégats</p>
+						</div>
+						<div class="param-card">
+							<div class="param-icon">N<sub>a</sub></div>
+							<h4>Nombre d'amorces</h4>
+							<p>Détermine le nombre de clusters initiaux</p>
+						</div>
+						<div class="param-card">
+							<div class="param-icon">v<sub>d</sub></div>
+							<h4>Vitesse de diffusion</h4>
+							<p>Affecte la ramification des structures</p>
+						</div>
+						<div class="param-card">
+							<div class="param-icon">d<sub>s</sub></div>
+							<h4>Distance d'adhésion</h4>
+							<p>Influence la densité des agrégats</p>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

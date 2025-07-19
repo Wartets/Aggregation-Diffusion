@@ -30,69 +30,141 @@ const particlesSlider = document.getElementById('particles-slider');
 const speedSlider = document.getElementById('speed-slider');
 const densitySlider = document.getElementById('density-slider');
 const seedsSelect = document.getElementById('seeds-select');
+const particlesValueEl = document.getElementById('particles-value');
+const speedValueEl = document.getElementById('speed-value');
+const densityValueEl = document.getElementById('density-value');
+const tabs = document.querySelectorAll('.tab');
+
+startBtn.addEventListener('click', () => {
+	if (params.simulationRunning) {
+		params.simulationRunning = false;
+		cancelAnimationFrame(animationId);
+		startBtn.textContent = "Reprendre la simulation";
+	} else {
+		params.simulationRunning = true;
+		if (!params.startTime) params.startTime = Date.now();
+		startBtn.textContent = "Pause";
+		simulate();
+	}
+});
+
+resetBtn.addEventListener('click', () => {
+	if (params.simulationRunning) {
+		params.simulationRunning = false;
+		cancelAnimationFrame(animationId);
+	}
+	initSimulation();
+	startBtn.textContent = "Démarrer la simulation";
+});
+
+particlesSlider.addEventListener('input', () => {
+	particlesValueEl.textContent = particlesSlider.value;
+	totalParticlesEl.textContent = particlesSlider.value;
+	if (!params.simulationRunning) {
+		initSimulation();
+	} else {
+		params.particleCount = parseInt(particlesSlider.value);
+		totalParticlesEl.textContent = params.particleCount;
+	}
+	redrawCanvas();
+});
+
+densitySlider.addEventListener('input', () => {
+	densityValueEl.textContent = densitySlider.value;
+	if (!params.simulationRunning) {
+		initSimulation();
+	}
+	redrawCanvas();
+});
+
+seedsSelect.addEventListener('change', () => {
+	if (!params.simulationRunning) {
+		initSimulation();
+	}
+	redrawCanvas();
+});
+
+speedSlider.addEventListener('input', () => {
+	speedValueEl.textContent = speedSlider.value;
+	params.stepSize = speedSlider.value / 20;
+	
+	redrawCanvas();
+});
+
+tabs.forEach(tab => {
+	tab.addEventListener('click', function() {
+		tabs.forEach(t => t.classList.remove('active'));
+		this.classList.add('active');
+		
+		currentMode = this.textContent.includes('Classique') ? 'classic' : 'mobile';
+		
+		resetBtn.click();
+		
+		redrawCanvas();
+	});
+});
 
 let particles = [];
 let aggregatedParticles = [];
 let animationId = null;
 
 class Particle {
-	constructor(x, y, radius, mobile = true) {
+	constructor(x, y, radius, mobile = true, isAggregator = false) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
 		this.mobile = mobile;
+		this.isAggregator = isAggregator;
+		this.clusterId = null;
+		this.clusterSize = 1;
+		this.color = isAggregator ? this.getRandomColor() : '#3498db';
 		this.stuck = !mobile;
-		this.color = mobile ? '#3498db' : '#e74c3c';
-        this.inCluster = false;
-        this.clusterId = null;
-        this.clusterSize = 1;
+	}
+	
+	getRandomColor() {
+		const colors = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB'];
+		return colors[Math.floor(Math.random() * colors.length)];
 	}
 	
 	move() {
-		if (!this.mobile || this.stuck) return;
+		if (!this.mobile) return;
+		
+		if (currentMode === 'mobile' && this.clusterId !== null) {
+			return;
+		}
 		
 		const angle = Math.random() * Math.PI * 2;
-		this.x += Math.cos(angle) * params.stepSize;
-		this.y += Math.sin(angle) * params.stepSize;
+		let step = params.stepSize;
+		
+		this.x += Math.cos(angle) * step;
+		this.y += Math.sin(angle) * step;
 		
 		if (this.x < 0) this.x = params.width;
 		if (this.x > params.width) this.x = 0;
 		if (this.y < 0) this.y = params.height;
 		if (this.y > params.height) this.y = 0;
 	}
-
-    moveCluster() {
-        if (!this.inCluster) return;
-        
-        const angle = Math.random() * Math.PI * 2;
-        const step = params.stepSize / Math.sqrt(this.clusterSize);
-        
-        this.x += Math.cos(angle) * step;
-        this.y += Math.sin(angle) * step;
-        
-        if (this.x < 0) this.x = params.width;
-        if (this.x > params.width) this.x = 0;
-        if (this.y < 0) this.y = params.height;
-        if (this.y > params.height) this.y = 0;
-    }
 	
 	checkAggregation() {
-		if (!this.mobile || this.stuck) return false;
+		if (!this.mobile) return false;
 		
 		for (const other of aggregatedParticles) {
-			const dx = this.x - other.x;
-			const dy = this.y - other.y;
-			const distance = Math.sqrt(dx*dx + dy*dy);
-			
-			if (distance < this.radius + other.radius + params.stickyDistance) {
+			if (this.checkCollision(other)) {
 				this.stuck = true;
 				this.mobile = false;
 				this.color = '#2ecc71';
 				return true;
 			}
 		}
-		
 		return false;
+	}
+	
+	checkCollision(other) {
+		const dx = this.x - other.x;
+		const dy = this.y - other.y;
+		const distance = Math.sqrt(dx*dx + dy*dy);
+		
+		return distance < this.radius + other.radius + params.stickyDistance;
 	}
 	
 	draw() {
@@ -112,42 +184,64 @@ function initSimulation() {
 	params.lastUpdate = null;
 	params.growthRate = 0;
 	
-    if (currentMode === 'classic') {
-        createSeedParticles();
-        createMobileParticles();
-    } else {
-        createMobileClusters();
-    }
+	particlesValueEl.textContent = particlesSlider.value;
+	speedValueEl.textContent = speedSlider.value;
+	densityValueEl.textContent = densitySlider.value;
+	
+	if (currentMode === 'classic') {
+		createSeedParticles();
+		createMobileParticles();
+	} else {
+		createMobileSeeds();
+		createMobileParticles();
+	}
 	
 	updateStats();
+}
+
+function redrawCanvas() {
+	ctx.clearRect(0, 0, params.width, params.height);
+	
+	for (const particle of aggregatedParticles) {
+		particle.draw();
+	}
+	
+	for (const particle of particles) {
+		particle.draw();
+	}
 }
 
 function createSeedParticles() {
 	const seedCount = parseInt(seedsSelect.value);
 	
 	if (seedCount === 1) {
-		const seed = new Particle(params.width/2, params.height/2, params.particleRadius, false);
-		seed.color = '#e74c3c';
+		const seed = new Particle(params.width/2, params.height/2, params.particleRadius, false, true);
 		aggregatedParticles.push(seed);
 	} else if (seedCount === 4) {
 		const offset = 100;
-		aggregatedParticles.push(new Particle(params.width/2 - offset, params.height/2 - offset, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2 + offset, params.height/2 - offset, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2 - offset, params.height/2 + offset, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2 + offset, params.height/2 + offset, params.particleRadius, false));
+		aggregatedParticles.push(new Particle(params.width/2 - offset, params.height/2 - offset, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2 + offset, params.height/2 - offset, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2 - offset, params.height/2 + offset, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2 + offset, params.height/2 + offset, params.particleRadius, false, true));
 	} else if (seedCount === 5) {
-		aggregatedParticles.push(new Particle(params.width/2, params.height/2, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2 - 80, params.height/2, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2 + 80, params.height/2, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2, params.height/2 - 80, params.particleRadius, false));
-		aggregatedParticles.push(new Particle(params.width/2, params.height/2 + 80, params.particleRadius, false));
+		aggregatedParticles.push(new Particle(params.width/2, params.height/2, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2 - 80, params.height/2, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2 + 80, params.height/2, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2, params.height/2 - 80, params.particleRadius, false, true));
+		aggregatedParticles.push(new Particle(params.width/2, params.height/2 + 80, params.particleRadius, false, true));
 	} else {
 		for (let i = 0; i < seedCount; i++) {
 			const x = 100 + Math.random() * (params.width - 200);
 			const y = 100 + Math.random() * (params.height - 200);
-			aggregatedParticles.push(new Particle(x, y, params.particleRadius, false));
+			const seed = new Particle(x, y, params.particleRadius, false, true);
+			aggregatedParticles.push(seed);
 		}
 	}
+	
+	aggregatedParticles.forEach((particle, index) => {
+		particle.clusterId = index;
+		particle.clusterSize = 1;
+	});
 	
 	params.aggregatedCount = aggregatedParticles.length;
 }
@@ -165,53 +259,93 @@ function createMobileParticles() {
 		const x = params.width/2 + Math.cos(angle) * distance;
 		const y = params.height/2 + Math.sin(angle) * distance;
 		
-		particles.push(new Particle(x, y, params.particleRadius));
+		particles.push(new Particle(x, y, params.particleRadius, true, false));
 	}
 }
 
-function createMobileClusters() {
-    const seedCount = parseInt(seedsSelect.value);
-    const clusterCenters = [];
-
-    if (seedCount === 1) {
-        clusterCenters.push({ x: params.width/2, y: params.height/2 });
-    } else if (seedCount === 4) {
-        const offset = 100;
-        clusterCenters.push({ x: params.width/2 - offset, y: params.height/2 - offset });
-        clusterCenters.push({ x: params.width/2 + offset, y: params.height/2 - offset });
-        clusterCenters.push({ x: params.width/2 - offset, y: params.height/2 + offset });
-        clusterCenters.push({ x: params.width/2 + offset, y: params.height/2 + offset });
-    } else {
-        for (let i = 0; i < seedCount; i++) {
-            clusterCenters.push({
-                x: 100 + Math.random() * (params.width - 200),
-                y: 100 + Math.random() * (params.height - 200)
-            });
-        }
-    }
-
-    const particlesPerCluster = Math.floor(params.particleCount / clusterCenters.length);
-    
-    clusterCenters.forEach((center, idx) => {
-        for (let i = 0; i < particlesPerCluster; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const distance = Math.random() * 50;
-            const x = center.x + Math.cos(angle) * distance;
-            const y = center.y + Math.sin(angle) * distance;
-            
-            const particle = new Particle(x, y, params.particleRadius);
-            particle.inCluster = true;
-            particle.clusterId = idx;
-            particle.clusterSize = particlesPerCluster;
-            particle.color = getClusterColor(idx);
-            particles.push(particle);
-        }
-    });
+function createMobileSeeds() {
+	const seedCount = parseInt(seedsSelect.value);
+	const colors = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB'];
+	
+	for (let i = 0; i < seedCount; i++) {
+		let x, y;
+		
+		if (seedCount === 1) {
+			x = params.width/2;
+			y = params.height/2;
+		} else if (seedCount === 4) {
+			const offset = 100;
+			const positions = [
+				[params.width/2 - offset, params.height/2 - offset],
+				[params.width/2 + offset, params.height/2 - offset],
+				[params.width/2 - offset, params.height/2 + offset],
+				[params.width/2 + offset, params.height/2 + offset]
+			];
+			[x, y] = positions[i];
+		} else if (seedCount === 5) {
+			const positions = [
+				[params.width/2, params.height/2],
+				[params.width/2 - 80, params.height/2],
+				[params.width/2 + 80, params.height/2],
+				[params.width/2, params.height/2 - 80],
+				[params.width/2, params.height/2 + 80]
+			];
+			[x, y] = positions[i];
+		} else {
+			x = 100 + Math.random() * (params.width - 200);
+			y = 100 + Math.random() * (params.height - 200);
+		}
+		
+		const seed = new Particle(x, y, params.particleRadius, true, true);
+		seed.clusterId = i;
+		seed.color = colors[i % colors.length];
+		aggregatedParticles.push(seed);
+	}
 }
 
 function getClusterColor(clusterId) {
-    const colors = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB'];
-    return colors[clusterId % colors.length];
+	const colors = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB'];
+	return colors[clusterId % colors.length];
+}
+
+function mergeClusters(p1, p2) {
+    let aggregator, newParticle;
+    
+    if (p1.isAggregator && !p2.isAggregator) {
+        aggregator = p1;
+        newParticle = p2;
+    } else if (!p1.isAggregator && p2.isAggregator) {
+        aggregator = p2;
+        newParticle = p1;
+    } else {
+        aggregator = Math.random() > 0.5 ? p1 : p2;
+        newParticle = aggregator === p1 ? p2 : p1;
+    }
+    
+    if (aggregator.clusterId === null) {
+        const newClusterId = Date.now();
+        aggregator.clusterId = newClusterId;
+        aggregator.clusterSize = 1;
+    }
+    
+    newParticle.clusterId = aggregator.clusterId;
+    newParticle.color = aggregator.color;
+    newParticle.isAggregator = true;
+    
+    const allParticles = [...particles, ...aggregatedParticles];
+    let newSize = 0;
+    
+    for (const p of allParticles) {
+        if (p.clusterId === aggregator.clusterId) {
+            newSize++;
+        }
+    }
+    
+    for (const p of allParticles) {
+        if (p.clusterId === aggregator.clusterId) {
+            p.clusterSize = newSize;
+        }
+    }
 }
 
 function simulate() {
@@ -219,27 +353,85 @@ function simulate() {
 	
 	ctx.clearRect(0, 0, params.width, params.height);
 	
-	for (const particle of aggregatedParticles) {
-		particle.draw();
-	}
-	
 	let aggregatedThisFrame = 0;
 	
-    for (const particle of particles) {
-        if (currentMode === 'classic') {
-            if (particle.stuck) continue;
-            particle.move();
-            if (particle.checkAggregation()) {
-                aggregatedParticles.push(particle);
-                params.aggregatedCount++;
-                aggregatedThisFrame++;
-            }
-        } else {
-            particle.moveCluster();
-        }
-        particle.draw();
-    }
-	
+	if (currentMode === 'classic') {
+		for (const particle of particles) {
+			if (particle.stuck) continue;
+			particle.move();
+			if (particle.checkAggregation()) {
+				aggregatedParticles.push(particle);
+				params.aggregatedCount++;
+				aggregatedThisFrame++;
+			}
+			particle.draw();
+		}
+		
+		for (const particle of aggregatedParticles) {
+			particle.draw();
+		}
+	} else {
+		const allParticles = [...particles, ...aggregatedParticles];
+		const clusters = new Map();
+		
+		for (const particle of allParticles) {
+			if (particle.clusterId !== null) {
+				if (!clusters.has(particle.clusterId)) {
+					clusters.set(particle.clusterId, []);
+				}
+				clusters.get(particle.clusterId).push(particle);
+			}
+		}
+		
+		for (const [clusterId, clusterParticles] of clusters) {
+			const angle = Math.random() * Math.PI * 2;
+			const step = params.stepSize / Math.sqrt(clusterParticles.length);
+			
+			const dx = Math.cos(angle) * step;
+			const dy = Math.sin(angle) * step;
+			
+			for (const particle of clusterParticles) {
+				particle.x += dx;
+				particle.y += dy;
+				
+				if (particle.x < 0) particle.x = params.width;
+				if (particle.x > params.width) particle.x = 0;
+				if (particle.y < 0) particle.y = params.height;
+				if (particle.y > params.height) particle.y = 0;
+			}
+		}
+		
+		for (const particle of allParticles) {
+			if (particle.clusterId === null) {
+				particle.move();
+			}
+		}
+		
+		// Vérifier les collisions
+		for (let i = 0; i < allParticles.length; i++) {
+			const p1 = allParticles[i];
+			
+			for (let j = i + 1; j < allParticles.length; j++) {
+				const p2 = allParticles[j];
+				
+				if (p1.clusterId !== null && p2.clusterId !== null && p1.clusterId === p2.clusterId) {
+					continue;
+				}
+				
+				if (p1.checkCollision(p2)) {
+					if (p1.isAggregator || p2.isAggregator) {
+						mergeClusters(p1, p2);
+						aggregatedThisFrame++;
+					}
+				}
+			}
+		}
+		
+		for (const particle of allParticles) {
+			particle.draw();
+		}
+	}
+
 	const now = Date.now();
 	if (params.lastUpdate) {
 		const elapsed = (now - params.lastUpdate) / 1000;
@@ -258,8 +450,21 @@ function simulate() {
 }
 
 function updateStats() {
-	particlesCountEl.textContent = params.aggregatedCount;
-	totalParticlesEl.textContent = params.particleCount;
+	if (currentMode === 'classic') {
+		particlesCountEl.textContent = params.aggregatedCount;
+		totalParticlesEl.textContent = params.particleCount;
+	} else {
+		const clusterIds = new Set();
+		const allParticles = [...particles, ...aggregatedParticles];
+		
+		for (const p of allParticles) {
+			if (p.clusterId !== null) {
+				clusterIds.add(p.clusterId);
+			}
+		}
+		particlesCountEl.textContent = clusterIds.size;
+		totalParticlesEl.textContent = "Clusters";
+	}
 	
 	if (params.startTime) {
 		const elapsed = (Date.now() - params.startTime) / 1000;
@@ -297,56 +502,12 @@ function updateStats() {
 	}
 }
 
-startBtn.addEventListener('click', () => {
-	if (params.simulationRunning) {
-		params.simulationRunning = false;
-		cancelAnimationFrame(animationId);
-		startBtn.textContent = "Reprendre la simulation";
-	} else {
-		params.simulationRunning = true;
-		if (!params.startTime) params.startTime = Date.now();
-		startBtn.textContent = "Pause";
-		simulate();
-	}
-});
-
-resetBtn.addEventListener('click', () => {
-	if (params.simulationRunning) {
-		params.simulationRunning = false;
-		cancelAnimationFrame(animationId);
-	}
-	initSimulation();
-	startBtn.textContent = "Démarrer la simulation";
-});
-
-particlesSlider.addEventListener('input', () => {
-	totalParticlesEl.textContent = particlesSlider.value;
-	if (!params.simulationRunning) {
-		initSimulation();
-	}
-});
-
-speedSlider.addEventListener('input', () => {
-	params.stepSize = speedSlider.value / 20;
-});
-
 initSimulation();
-
-const tabs = document.querySelectorAll('.tab');
-tabs.forEach(tab => {
-    tab.addEventListener('click', function() {
-        tabs.forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-        
-        currentMode = this.textContent.includes('Classique') ? 'classic' : 'mobile';
-        
-        resetBtn.click();
-    });
-});
 
 for (const particle of aggregatedParticles) {
 	particle.draw();
 }
+
 for (const particle of particles) {
 	particle.draw();
 }
